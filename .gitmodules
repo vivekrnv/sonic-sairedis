@@ -1,5 +1,4 @@
 [submodule "SAI"]
 	path = SAI
-	url = https://github.com/opencomputeproject/SAI.git
-	ignore = dirty
-	branch = v1.3
+	url = https://github.com/vivekreddynv/SAI.git
+	branch = saithriftv2_api_fix
