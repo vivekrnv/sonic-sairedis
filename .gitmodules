@@ -1,4 +1,4 @@
 [submodule "SAI"]
 	path = SAI
 	url = https://github.com/vivekreddynv/SAI.git
-	branch = saithriftv2_api_fix
+	branch = saithriftv2_api_fix_v1.10
