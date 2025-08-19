@@ -2130,6 +2130,7 @@ sai_status_t Syncd::processBulkEntry(
 
     if (m_commandLineOptions->m_enableSaiBulkSupport)
     {
+        auto start = std::chrono::high_resolution_clock::now();
         switch (api)
         {
             case SAI_COMMON_API_BULK_CREATE:
@@ -2148,6 +2149,13 @@ sai_status_t Syncd::processBulkEntry(
                 SWSS_LOG_ERROR("api %s is not supported in bulk", sai_serialize_common_api(api).c_str());
                 all = SAI_STATUS_NOT_SUPPORTED;
         }
+        auto end = std::chrono::high_resolution_clock::now();
+
+        SWSS_LOG_NOTICE("Processing bulk %s for type %s with %zu objectIds took %.3f seconds",
+                sai_serialize_common_api(api).c_str(),
+                sai_serialize_object_type(objectType).c_str(),
+                objectIds.size(),
+                static_cast<double>(std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()) / 1000.0);
 
         if (all != SAI_STATUS_NOT_SUPPORTED && all != SAI_STATUS_NOT_IMPLEMENTED)
         {
