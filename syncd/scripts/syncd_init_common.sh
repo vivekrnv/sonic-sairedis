@@ -349,6 +349,18 @@ config_syncd_mlnx()
 
     echo >> /tmp/sai-temp.profile
 
+    DEVICE_TYPE=$(/usr/bin/asic_detect/asic_detect.sh)
+    if [[ $? -eq 0 ]]; then
+        ASIC_PROFILE_FILE="sai-${DEVICE_TYPE}.profile"
+        ASIC_PROFILE_PATH="/etc/mlnx/${ASIC_PROFILE_FILE}"
+        if [ -f "$ASIC_PROFILE_PATH" ]; then
+            cat "$ASIC_PROFILE_PATH" >> /tmp/sai-temp.profile
+            echo >> /tmp/sai-temp.profile
+        fi
+    else
+        echo "Warning: ASIC is not detected..."
+    fi
+
     if [[ -f $SAI_COMMON_FILE_PATH ]]; then
         cat $SAI_COMMON_FILE_PATH >> /tmp/sai-temp.profile
     fi
@@ -509,7 +521,25 @@ config_syncd_nvidia_bluefield()
 
     eth0_mac=$(cat /sys/class/net/Ethernet0/address)
 
-    cp $HWSKU_DIR/sai.profile /tmp/sai.profile
+    cp $HWSKU_DIR/sai.profile /tmp/sai-temp.profile
+
+    echo >> /tmp/sai-temp.profile
+
+    DEVICE_TYPE=$(/usr/bin/asic_detect/asic_detect.sh)
+    if [[ $? -eq 0 ]]; then
+        ASIC_PROFILE_FILE="sai-${DEVICE_TYPE}.profile"
+        ASIC_PROFILE_PATH="/etc/mlnx/${ASIC_PROFILE_FILE}"
+        if [ -f "$ASIC_PROFILE_PATH" ]; then
+            cat "$ASIC_PROFILE_PATH" >> /tmp/sai-temp.profile
+            echo >> /tmp/sai-temp.profile
+        fi
+    else
+        echo "Warning: ASIC is not detected..."
+    fi
+
+    # keep only the first occurence of each prefix with '=' sign, and remove the others.
+    awk -F= '!seen[$1]++' /tmp/sai-temp.profile > /tmp/sai.profile
+    rm -f /tmp/sai-temp.profile
 
     # Update sai.profile with MAC_ADDRESS
     echo "DEVICE_MAC_ADDRESS=$base_mac" >> /tmp/sai.profile
@@ -567,6 +597,11 @@ config_syncd_xsight()
     CMD_ARGS+=" -p $HWSKU_DIR/sai.profile"
 }
 
+config_syncd_clounix()
+{
+    CMD_ARGS+=" -p $HWSKU_DIR/sai.profile"
+}
+
 config_syncd()
 {
     check_warm_boot
@@ -602,6 +637,8 @@ config_syncd()
         config_syncd_xsight
     elif [ "$SONIC_ASIC_TYPE" == "pensando" ]; then
 	config_syncd_pensando
+    elif [ "$SONIC_ASIC_TYPE" == "clounix" ]; then
+        config_syncd_clounix
     else
         echo "Unknown ASIC type $SONIC_ASIC_TYPE"
         exit 1
