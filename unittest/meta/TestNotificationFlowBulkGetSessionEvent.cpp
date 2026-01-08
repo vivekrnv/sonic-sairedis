@@ -79,3 +79,4 @@ TEST(NotificationFlowBulkGetSessionEvent, executeCallback)
     n.executeCallback(switchNotifications);
 }
 
+

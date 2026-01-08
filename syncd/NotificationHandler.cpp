@@ -1,4 +1,5 @@
 #include "NotificationHandler.h"
+#include "FlowDump.h"
 #include "Workaround.h"
 #include "sairediscommon.h"
 
@@ -228,24 +229,35 @@ void NotificationHandler::onFlowBulkGetSessionEvent(
 {
     SWSS_LOG_ENTER();
 
-    int has_finished = false;
+    bool has_finished = false;
+
+    // Check for FINISHED events
     for (uint32_t i = 0; i < count; ++i)
     {
         if (data[i].event_type == SAI_FLOW_BULK_GET_SESSION_EVENT_FINISHED)
         {
             has_finished = true;
+            break;
         }
     }
 
+    // Serialize FLOW_ENTRY events to JSON lines using singleton serializer
+    FlowDumpDataPtr flow_dump_data = FlowDumpSerializer::getInstance().serializeToJsonLines(
+            flow_bulk_session_id, count, data);
+
     if (has_finished)
     {
+        // Send FINISHED event notification to orchagent
         std::string s = sai_serialize_flow_bulk_get_session_event_ntf(flow_bulk_session_id, count, data);
         enqueueNotification(SAI_SWITCH_NOTIFICATION_NAME_FLOW_BULK_GET_SESSION_EVENT, s);
     }
-    else
+
+    // Enqueue flow dump data if we have any FLOW_ENTRY events
+    if (flow_dump_data != nullptr && !flow_dump_data->json_lines.empty())
     {
-        // For FLOW_ENTRY events, we'll handle them separately when file dumping is implemented
-        SWSS_LOG_DEBUG("Received FLOW_ENTRY event, skipping serialization (file dumping not yet implemented)");
+        std::string s = sai_serialize_flow_bulk_get_session_event_ntf(flow_bulk_session_id, count, data);
+        enqueueNotification(SAI_SWITCH_NOTIFICATION_NAME_FLOW_BULK_GET_SESSION_EVENT, s, flow_dump_data);
+        SWSS_LOG_DEBUG("Enqueued %zu flow entries for file dumping", flow_dump_data->json_lines.size());
     }
 }
 
@@ -261,6 +273,23 @@ void NotificationHandler::enqueueNotification(
     swss::KeyOpFieldsValuesTuple item(op, data, entry);
 
     if (m_notificationQueue->enqueue(item))
+    {
+        m_processor->signal();
+    }
+}
+
+void NotificationHandler::enqueueNotification(
+        _In_ const std::string& op,
+        _In_ const std::string& data,
+        _In_ FlowDumpDataPtr auxiliary_data)
+{
+    SWSS_LOG_ENTER();
+
+    SWSS_LOG_INFO("%s %s", op.c_str(), data.c_str());
+
+    swss::KeyOpFieldsValuesTuple item(op, data, std::vector<swss::FieldValueTuple>());
+
+    if (m_notificationQueue->enqueue(item, auxiliary_data))
     {
         m_processor->signal();
     }

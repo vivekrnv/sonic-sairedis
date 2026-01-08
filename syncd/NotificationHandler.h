@@ -6,6 +6,7 @@ extern "C"{
 
 #include "NotificationQueue.h"
 #include "NotificationProcessor.h"
+#include "FlowDump.h"
 
 #include "swss/table.h"
 
@@ -125,6 +126,11 @@ namespace syncd
             void enqueueNotification(
                     _In_ const std::string& op,
                     _In_ const std::string& data);
+
+            void enqueueNotification(
+                    _In_ const std::string& op,
+                    _In_ const std::string& data,
+                    _In_ FlowDumpDataPtr auxiliary_data);
 
         private:
 
