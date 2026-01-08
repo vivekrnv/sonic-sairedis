@@ -153,6 +153,9 @@ namespace syncd
             void handle_ha_scope_event(
                     _In_ const std::string &data);
 
+            void handle_flow_bulk_get_session_event(
+                    _In_ const std::string &data);
+
             void handle_switch_asic_sdk_health_event(
                     _In_ const std::string &data);
 

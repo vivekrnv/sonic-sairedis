@@ -830,6 +830,26 @@ void NotificationProcessor::handle_ha_scope_event(
     sai_deserialize_free_ha_scope_event_ntf(count, ha_scope_event);
 }
 
+void NotificationProcessor::handle_flow_bulk_get_session_event(
+        _In_ const std::string &data)
+{
+    SWSS_LOG_ENTER();
+
+    sai_object_id_t flow_bulk_session_id;
+    uint32_t count;
+    sai_flow_bulk_get_session_event_data_t* event_data;
+
+    sai_deserialize_flow_bulk_get_session_event_ntf(data, flow_bulk_session_id, count, &event_data);
+
+    flow_bulk_session_id = m_translator->translateRidToVid(flow_bulk_session_id, SAI_NULL_OBJECT_ID);
+
+    std::string s = sai_serialize_flow_bulk_get_session_event_ntf(flow_bulk_session_id, count, event_data);
+
+    sai_deserialize_free_flow_bulk_get_session_event_ntf(count, event_data);
+
+    sendNotification(SAI_SWITCH_NOTIFICATION_NAME_FLOW_BULK_GET_SESSION_EVENT, s);
+}
+
 void NotificationProcessor::handle_switch_asic_sdk_health_event(
         _In_ const std::string &data)
 {
@@ -1032,6 +1052,10 @@ void NotificationProcessor::syncProcessNotification(
     else if (notification == SAI_SWITCH_NOTIFICATION_NAME_HA_SCOPE_EVENT)
     {
         handle_ha_scope_event(data);
+    }
+    else if (notification == SAI_SWITCH_NOTIFICATION_NAME_FLOW_BULK_GET_SESSION_EVENT)
+    {
+        handle_flow_bulk_get_session_event(data);
     }
     else
     {

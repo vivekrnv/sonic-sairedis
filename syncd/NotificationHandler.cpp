@@ -221,6 +221,34 @@ void NotificationHandler::onHaScopeEvent(
     enqueueNotification(SAI_SWITCH_NOTIFICATION_NAME_HA_SCOPE_EVENT, s);
 }
 
+void NotificationHandler::onFlowBulkGetSessionEvent(
+        _In_ sai_object_id_t flow_bulk_session_id,
+        _In_ uint32_t count,
+        _In_ const sai_flow_bulk_get_session_event_data_t *data)
+{
+    SWSS_LOG_ENTER();
+
+    int has_finished = false;
+    for (uint32_t i = 0; i < count; ++i)
+    {
+        if (data[i].event_type == SAI_FLOW_BULK_GET_SESSION_EVENT_FINISHED)
+        {
+            has_finished = true;
+        }
+    }
+
+    if (has_finished)
+    {
+        std::string s = sai_serialize_flow_bulk_get_session_event_ntf(flow_bulk_session_id, count, data);
+        enqueueNotification(SAI_SWITCH_NOTIFICATION_NAME_FLOW_BULK_GET_SESSION_EVENT, s);
+    }
+    else
+    {
+        // For FLOW_ENTRY events, we'll handle them separately when file dumping is implemented
+        SWSS_LOG_DEBUG("Received FLOW_ENTRY event, skipping serialization (file dumping not yet implemented)");
+    }
+}
+
 void NotificationHandler::enqueueNotification(
         _In_ const std::string& op,
         _In_ const std::string& data,
