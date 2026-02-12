@@ -34,11 +34,6 @@ namespace syncd
 
         try
         {
-            // sai_serialize_attr_value already handles all standard types including:
-            // - Enum types (sai_dash_direction_t, sai_dash_flow_action_t, sai_dash_encapsulation_t,
-            //   sai_dash_flow_sync_state_t, sai_ip_addr_family_t) via INT32 with enummetadata
-            // - sai_u8_list_t via UINT8_LIST
-            // - MAC, IP_ADDRESS, IPV4, IPV6, IP_PREFIX, BOOL, CHARDATA, and all numeric types
             return sai_serialize_attr_value(*meta, attr, false);
         }
         catch (const std::exception& e)

@@ -1121,7 +1121,6 @@ void NotificationProcessor::ntf_process_function()
 
         while (m_notificationQueue->tryDequeue(item))
         {
-            // Process notification with auxiliary data
             processNotification(item);
         }
     }
