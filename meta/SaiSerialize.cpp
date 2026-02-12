@@ -2767,7 +2767,7 @@ std::string sai_serialize_flow_bulk_get_session_event_ntf(
 
     if (data == NULL)
     {
-        SWSS_LOG_THROW("data pointer is null");
+        SWSS_LOG_THROW("flow_bulk_get_session_event_data_t pointer is null");
     }
 
     /*
@@ -6322,7 +6322,6 @@ void sai_deserialize_free_flow_bulk_get_session_event_ntf(
         return;
     }
 
-    /* NOTE: No need to free attr as it will not be allocated */
     delete[] data;
 }
 
