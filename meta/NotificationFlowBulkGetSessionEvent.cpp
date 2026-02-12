@@ -58,9 +58,10 @@ void NotificationFlowBulkGetSessionEvent::processMetadata(
 {
     SWSS_LOG_ENTER();
 
-    // For flow bulk get session event, we don't need to process metadata
-    // since we're only handling FINISHED events which don't contain flow entries
-    // If needed in the future, we can add meta_sai_on_flow_bulk_get_session_event here
+    meta->meta_sai_on_flow_bulk_get_session_event(
+            m_flow_bulk_session_id,
+            m_count,
+            m_data);
 }
 
 void NotificationFlowBulkGetSessionEvent::executeCallback(
