@@ -7246,31 +7246,19 @@ void Meta::meta_sai_on_flow_bulk_get_session_event(
         return;
     }
 
-    // Process the flow_bulk_session_id once, then process each event data
     if (flow_bulk_session_id != SAI_NULL_OBJECT_ID)
     {
-        // Validate and track the flow_bulk_session_id object
         auto ot = objectTypeQuery(flow_bulk_session_id);
 
-        bool valid = false;
-
-        switch ((int)ot)
+        if (ot != SAI_OBJECT_TYPE_FLOW_ENTRY_BULK_GET_SESSION)
         {
-            // TODO hardcoded types, must advance SAI repository commit to get metadata for this
-            case SAI_OBJECT_TYPE_FLOW_ENTRY_BULK_GET_SESSION:
-
-                valid = true;
-                break;
-
-            default:
-
-                SWSS_LOG_ERROR("flow_bulk_session_id %s has unexpected type: %s, expected FLOW_ENTRY_BULK_GET_SESSION",
-                        sai_serialize_object_id(flow_bulk_session_id).c_str(),
-                        sai_serialize_object_type(ot).c_str());
-                break;
+            SWSS_LOG_ERROR("flow_bulk_session_id %s has unexpected type: %s",
+                    sai_serialize_object_id(flow_bulk_session_id).c_str(),
+                    sai_serialize_object_type(ot).c_str());
+            return ;
         }
 
-        if (valid && !m_oids.objectReferenceExists(flow_bulk_session_id))
+        if (!m_oids.objectReferenceExists(flow_bulk_session_id))
         {
             SWSS_LOG_NOTICE("flow_bulk_session_id new object spotted %s not present in local DB (snoop!)",
                     sai_serialize_object_id(flow_bulk_session_id).c_str());
