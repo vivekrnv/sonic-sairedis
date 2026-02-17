@@ -1,5 +1,6 @@
 #include "FlowDump.h"
 #include "meta/sai_serialize.h"
+#include "swss/logger.h"
 
 #include <gtest/gtest.h>
 #include <cstring>
@@ -24,6 +25,7 @@ class FlowDumpTest : public ::testing::Test
 
         virtual void SetUp()
         {
+            SWSS_LOG_ENTER();
             // Reset FlowDumpWriter base path to default for each test
             FlowDumpWriter& writer = FlowDumpWriter::getInstance();
             writer.setBasePath(FlowDumpWriter::DEFAULT_BASE_PATH);
@@ -61,12 +63,14 @@ class FlowDumpTest : public ::testing::Test
 
         virtual void TearDown()
         {
+            SWSS_LOG_ENTER();
             // Clean up test files
             removeTestDirectory(m_test_dir);
         }
 
         void removeTestDirectory(const std::string& dir_path)
         {
+            SWSS_LOG_ENTER();
             DIR* dir = opendir(dir_path.c_str());
             if (dir != nullptr)
             {
@@ -86,6 +90,7 @@ class FlowDumpTest : public ::testing::Test
 
         void clearTestDirectory(const std::string& dir_path)
         {
+            SWSS_LOG_ENTER();
             // Clear any existing files in the directory
             DIR* dir = opendir(dir_path.c_str());
             if (dir != nullptr)
@@ -116,6 +121,7 @@ class FlowDumpTest : public ::testing::Test
 // Test FlowDumpSerializer with a single flow entry
 TEST_F(FlowDumpTest, FlowDumpSerializer_SingleFlowEntry)
 {
+    SWSS_LOG_ENTER();
     nlohmann::json json_line = FlowDumpSerializer::serializeFlowEntryToJson(m_event_data);
 
     // Verify flow entry fields are serialized correctly
@@ -128,9 +134,29 @@ TEST_F(FlowDumpTest, FlowDumpSerializer_SingleFlowEntry)
     EXPECT_EQ(json_line["di"], "192.168.0.1");
 }
 
+// Test epoch difference when serializing with 1 sec gap
+TEST_F(FlowDumpTest, FlowDumpSerializer_EpochDifferenceAfterOneSecondGap)
+{
+    SWSS_LOG_ENTER();
+    nlohmann::json json_line1 = FlowDumpSerializer::serializeFlowEntryToJson(m_event_data);
+    ASSERT_TRUE(json_line1.contains("epoch"));
+    int64_t epoch1 = json_line1["epoch"].get<int64_t>();
+
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    nlohmann::json json_line2 = FlowDumpSerializer::serializeFlowEntryToJson(m_event_data);
+    ASSERT_TRUE(json_line2.contains("epoch"));
+    int64_t epoch2 = json_line2["epoch"].get<int64_t>();
+
+    int64_t epoch_diff = epoch2 - epoch1;
+    // Epoch difference should be <= 1 sec (gap) + 1 sec (delta tolerance)
+    EXPECT_LE(epoch_diff, 2) << "epoch difference " << epoch_diff << "s should be <= 2 (1s gap + 1s delta)";
+}
+
 // Test FlowDumpSerializer with multiple flow entries
 TEST_F(FlowDumpTest, FlowDumpSerializer_MultipleFlowEntries)
 {
+    SWSS_LOG_ENTER();
     // First flow entry
     sai_flow_bulk_get_session_event_data_t event_data1 = m_event_data;
 
@@ -156,6 +182,7 @@ TEST_F(FlowDumpTest, FlowDumpSerializer_MultipleFlowEntries)
 // Test FlowDumpSerializer with FINISHED event (should still serialize, event_type is not checked)
 TEST_F(FlowDumpTest, FlowDumpSerializer_FinishedEvent)
 {
+    SWSS_LOG_ENTER();
     sai_flow_bulk_get_session_event_data_t event_data = m_event_data;
     event_data.event_type = SAI_FLOW_BULK_GET_SESSION_EVENT_FINISHED;
 
@@ -170,6 +197,7 @@ TEST_F(FlowDumpTest, FlowDumpSerializer_FinishedEvent)
 // Test FlowDumpSerializer with flow attributes
 TEST_F(FlowDumpTest, FlowDumpSerializer_WithAttributes)
 {
+    SWSS_LOG_ENTER();
     sai_flow_bulk_get_session_event_data_t event_data = m_event_data;
 
     // Set up attributes
@@ -231,6 +259,7 @@ TEST_F(FlowDumpTest, FlowDumpSerializer_WithAttributes)
 // Test FlowDumpWriter - write and read back flow dump data
 TEST_F(FlowDumpTest, FlowDumpWriter_WriteAndRead)
 {
+    SWSS_LOG_ENTER();
     // Clear any existing files in test directory
     clearTestDirectory(m_test_dir);
 
@@ -340,8 +369,9 @@ TEST_F(FlowDumpTest, FlowDumpWriter_WriteAndRead)
 // Test FlowDumpWriter - verify file path generation
 TEST_F(FlowDumpTest, FlowDumpWriter_FilePathGeneration)
 {
+    SWSS_LOG_ENTER();
     std::string test_dir = "/tmp/test";
-    
+
     // Clear any existing files in test directory
     clearTestDirectory(test_dir);
 
@@ -388,9 +418,9 @@ TEST_F(FlowDumpTest, FlowDumpWriter_FilePathGeneration)
     rmdir(test_dir.c_str());
 }
 
-// Test FlowDumpWriter - verify base path getter/setter
 TEST_F(FlowDumpTest, FlowDumpWriter_BasePathGetterSetter)
 {
+    SWSS_LOG_ENTER();
     FlowDumpWriter& writer = FlowDumpWriter::getInstance();
 
     // Test default path
@@ -409,6 +439,7 @@ TEST_F(FlowDumpTest, FlowDumpWriter_BasePathGetterSetter)
 // Test FlowDumpWriter - null data handling
 TEST_F(FlowDumpTest, FlowDumpWriter_NullData)
 {
+    SWSS_LOG_ENTER();
     FlowDumpWriter& writer = FlowDumpWriter::getInstance();
     bool success = writer.writeFlowDumpData(nullptr, 0x1000000000001);
     ASSERT_FALSE(success);
@@ -417,8 +448,9 @@ TEST_F(FlowDumpTest, FlowDumpWriter_NullData)
 // Test FlowDumpWriter - write multiple flows and verify
 TEST_F(FlowDumpTest, FlowDumpWriter_MultipleFlows)
 {
+    SWSS_LOG_ENTER();
     std::string test_dir = "/tmp/test_multiple_flows";
-    
+
     // Clear any existing files in test directory
     clearTestDirectory(test_dir);
 
@@ -594,8 +626,9 @@ TEST_F(FlowDumpTest, FlowDumpWriter_MultipleFlows)
 // Test FlowDumpWriter - write flows with attributes and verify
 TEST_F(FlowDumpTest, FlowDumpWriter_WithAttributes)
 {
+    SWSS_LOG_ENTER();
     std::string test_dir = "/tmp/test_flows_with_attributes";
-    
+
     // Clear any existing files in test directory
     clearTestDirectory(test_dir);
 
@@ -605,22 +638,22 @@ TEST_F(FlowDumpTest, FlowDumpWriter_WithAttributes)
 
     // Create flow dump data with attributes using FlowDumpSerializer
     sai_flow_bulk_get_session_event_data_t event_data[2];
-    
+
     // Flow 1: With attributes
     event_data[0] = m_event_data;
     sai_attribute_t attrs1[3];
     memset(attrs1, 0, sizeof(attrs1));
-    
+
     attrs1[0].id = SAI_FLOW_ENTRY_ATTR_VERSION;
     attrs1[0].value.u32 = 100;
-    
+
     attrs1[1].id = SAI_FLOW_ENTRY_ATTR_IS_UNIDIRECTIONAL_FLOW;
     attrs1[1].value.booldata = true;
-    
+
     attrs1[2].id = SAI_FLOW_ENTRY_ATTR_DST_MAC;
     uint8_t dst_mac1[6] = {0x11, 0x22, 0x33, 0x44, 0x55, 0x66};
     memcpy(attrs1[2].value.mac, dst_mac1, 6);
-    
+
     event_data[0].attr_count = 3;
     event_data[0].attr = attrs1;
 
@@ -629,17 +662,17 @@ TEST_F(FlowDumpTest, FlowDumpWriter_WithAttributes)
     event_data[1].flow_entry.vnet_id = 100;
     event_data[1].flow_entry.src_port = 9999;
     event_data[1].flow_entry.dst_port = 8888;
-    
+
     sai_attribute_t attrs2[2];
     memset(attrs2, 0, sizeof(attrs2));
-    
+
     attrs2[0].id = SAI_FLOW_ENTRY_ATTR_VERSION;
     attrs2[0].value.u32 = 200;
-    
+
     attrs2[1].id = SAI_FLOW_ENTRY_ATTR_SIP;
     attrs2[1].value.ipaddr.addr_family = SAI_IP_ADDR_FAMILY_IPV4;
     attrs2[1].value.ipaddr.addr.ip4 = inet_addr("1.2.3.4");
-    
+
     event_data[1].attr_count = 2;
     event_data[1].attr = attrs2;
 
@@ -649,7 +682,7 @@ TEST_F(FlowDumpTest, FlowDumpWriter_WithAttributes)
     nlohmann::json json_line2 = FlowDumpSerializer::serializeFlowEntryToJson(event_data[1]);
     data->json_lines.push_back(json_line1);
     data->json_lines.push_back(json_line2);
-    
+
     ASSERT_NE(data, nullptr);
     ASSERT_EQ(data->json_lines.size(), 2);
 
@@ -714,17 +747,17 @@ TEST_F(FlowDumpTest, FlowDumpWriter_WithAttributes)
     EXPECT_EQ(read_lines[0]["vn"], 1);
     EXPECT_EQ(read_lines[0]["sp"], 12345);
     EXPECT_EQ(read_lines[0]["dp"], 80);
-    
+
     std::string attr_version_key1 = std::to_string(SAI_FLOW_ENTRY_ATTR_VERSION);
     std::string attr_unidirectional_key = std::to_string(SAI_FLOW_ENTRY_ATTR_IS_UNIDIRECTIONAL_FLOW);
     std::string attr_dst_mac_key = std::to_string(SAI_FLOW_ENTRY_ATTR_DST_MAC);
-    
+
     ASSERT_TRUE(read_lines[0].contains(attr_version_key1));
     EXPECT_EQ(read_lines[0][attr_version_key1], "100");  // Serialized as string
-    
+
     ASSERT_TRUE(read_lines[0].contains(attr_unidirectional_key));
     EXPECT_EQ(read_lines[0][attr_unidirectional_key], "true");  // Serialized as string
-    
+
     ASSERT_TRUE(read_lines[0].contains(attr_dst_mac_key));
     EXPECT_EQ(read_lines[0][attr_dst_mac_key], "11:22:33:44:55:66");
 
@@ -732,13 +765,13 @@ TEST_F(FlowDumpTest, FlowDumpWriter_WithAttributes)
     EXPECT_EQ(read_lines[1]["vn"], 100);
     EXPECT_EQ(read_lines[1]["sp"], 9999);
     EXPECT_EQ(read_lines[1]["dp"], 8888);
-    
+
     std::string attr_version_key2 = std::to_string(SAI_FLOW_ENTRY_ATTR_VERSION);
     std::string attr_sip_key = std::to_string(SAI_FLOW_ENTRY_ATTR_SIP);
-    
+
     ASSERT_TRUE(read_lines[1].contains(attr_version_key2));
     EXPECT_EQ(read_lines[1][attr_version_key2], "200");  // Serialized as string
-    
+
     ASSERT_TRUE(read_lines[1].contains(attr_sip_key));
     EXPECT_EQ(read_lines[1][attr_sip_key], "1.2.3.4");
 
@@ -750,8 +783,9 @@ TEST_F(FlowDumpTest, FlowDumpWriter_WithAttributes)
 // Test FlowDumpWriter - logrotate functionality
 TEST_F(FlowDumpTest, FlowDumpWriter_LogRotate)
 {
+    SWSS_LOG_ENTER();
     std::string test_dir = "/tmp/test_logrotate";
-    
+
     // Clear any existing files in test directory
     clearTestDirectory(test_dir);
 
@@ -786,7 +820,7 @@ TEST_F(FlowDumpTest, FlowDumpWriter_LogRotate)
 
     // Get the actual file paths that were created
     std::vector<std::pair<std::string, std::time_t>> files_before;
-    
+
     DIR* dir = opendir(test_dir.c_str());
     ASSERT_NE(dir, nullptr);
     struct dirent* entry;
@@ -797,7 +831,7 @@ TEST_F(FlowDumpTest, FlowDumpWriter_LogRotate)
         {
             continue;
         }
-        
+
         std::string filename = entry->d_name;
         if (filename.find(FlowDumpWriter::FLOW_DUMP_FILE_PREFIX) == 0 && filename.find(FlowDumpWriter::FLOW_DUMP_FILE_SUFFIX) != std::string::npos)
         {
@@ -807,7 +841,7 @@ TEST_F(FlowDumpTest, FlowDumpWriter_LogRotate)
                 full_path += '/';
             }
             full_path += filename;
-            
+
             if (stat(full_path.c_str(), &st) == 0 && S_ISREG(st.st_mode))
             {
                 files_before.push_back(std::make_pair(full_path, st.st_mtime));
@@ -816,13 +850,13 @@ TEST_F(FlowDumpTest, FlowDumpWriter_LogRotate)
     }
     closedir(dir);
     ASSERT_EQ(files_before.size(), 2) << "Expected 2 files after creating second file";
-    
+
     // Sort files by modification time to identify oldest
     std::sort(files_before.begin(), files_before.end(),
               [](const std::pair<std::string, std::time_t>& a, const std::pair<std::string, std::time_t>& b) {
                   return a.second < b.second;
               });
-    
+
     // The first file in the sorted list is the oldest (vid1)
     std::string file1_path = files_before[0].first;
     std::string file2_path = files_before[1].first;
@@ -845,7 +879,7 @@ TEST_F(FlowDumpTest, FlowDumpWriter_LogRotate)
         {
             continue;
         }
-        
+
         std::string filename = entry->d_name;
         if (filename.find(FlowDumpWriter::FLOW_DUMP_FILE_PREFIX) == 0 && filename.find(FlowDumpWriter::FLOW_DUMP_FILE_SUFFIX) != std::string::npos)
         {
@@ -855,7 +889,7 @@ TEST_F(FlowDumpTest, FlowDumpWriter_LogRotate)
                 full_path += '/';
             }
             full_path += filename;
-            
+
             if (stat(full_path.c_str(), &st) == 0 && S_ISREG(st.st_mode))
             {
                 files_after.push_back(full_path);
@@ -873,11 +907,11 @@ TEST_F(FlowDumpTest, FlowDumpWriter_LogRotate)
     ASSERT_EQ(stat(file2_path.c_str(), &file_stat), 0) << "Second file should still exist";
 
     // Verify file1_path is not in the remaining files
-    ASSERT_EQ(std::find(files_after.begin(), files_after.end(), file1_path), files_after.end()) 
+    ASSERT_EQ(std::find(files_after.begin(), files_after.end(), file1_path), files_after.end())
         << "First file should not be in remaining files";
-    
+
     // Verify file2_path is in the remaining files
-    ASSERT_NE(std::find(files_after.begin(), files_after.end(), file2_path), files_after.end()) 
+    ASSERT_NE(std::find(files_after.begin(), files_after.end(), file2_path), files_after.end())
         << "Second file should be in remaining files";
 
     // Clean up
@@ -891,6 +925,7 @@ TEST_F(FlowDumpTest, FlowDumpWriter_LogRotate)
 // Test FlowDumpSerializer::serializeAttributeValue with enum types
 TEST_F(FlowDumpTest, FlowDumpSerializer_AttributeValue_EnumTypes)
 {
+    SWSS_LOG_ENTER();
     sai_flow_bulk_get_session_event_data_t event_data = m_event_data;
 
     // Set up attributes with enum types
@@ -901,9 +936,9 @@ TEST_F(FlowDumpTest, FlowDumpSerializer_AttributeValue_EnumTypes)
     attrs[0].id = SAI_FLOW_ENTRY_ATTR_DASH_DIRECTION;
     attrs[0].value.s32 = SAI_DASH_DIRECTION_OUTBOUND;
 
-    // Attribute 2: DASH flow action (enum - sai_dash_flow_action_t)
+    // Attribute 2: DASH flow action (bit mask - sai_dash_flow_action_t, serialized as numeric)
     attrs[1].id = SAI_FLOW_ENTRY_ATTR_DASH_FLOW_ACTION;
-    attrs[1].value.s32 = SAI_DASH_FLOW_ACTION_ENCAP_U1;
+    attrs[1].value.s32 = SAI_DASH_FLOW_ACTION_ENCAP_U1;  // 1 << 1 = 2
 
     // Attribute 3: DASH encapsulation (enum - sai_dash_encapsulation_t)
     attrs[2].id = SAI_FLOW_ENTRY_ATTR_UNDERLAY0_DASH_ENCAPSULATION;
@@ -936,7 +971,8 @@ TEST_F(FlowDumpTest, FlowDumpSerializer_AttributeValue_EnumTypes)
 
     ASSERT_TRUE(json_line.contains(attr_flow_action_key));
     EXPECT_TRUE(json_line[attr_flow_action_key].is_string());
-    EXPECT_EQ(json_line[attr_flow_action_key], "SAI_DASH_FLOW_ACTION_ENCAP_U1");
+    // DASH flow action is serialized as numeric bit mask (no sai_serialize_attr_value)
+    EXPECT_EQ(json_line[attr_flow_action_key], "2");
 
     ASSERT_TRUE(json_line.contains(attr_encap_key));
     EXPECT_TRUE(json_line[attr_encap_key].is_string());
@@ -954,6 +990,7 @@ TEST_F(FlowDumpTest, FlowDumpSerializer_AttributeValue_EnumTypes)
 // Test FlowDumpSerializer::serializeAttributeValue with sai_u8_list_t
 TEST_F(FlowDumpTest, FlowDumpSerializer_AttributeValue_U8List)
 {
+    SWSS_LOG_ENTER();
     sai_flow_bulk_get_session_event_data_t event_data = m_event_data;
 
     // Set up attributes with u8_list type
@@ -992,6 +1029,7 @@ TEST_F(FlowDumpTest, FlowDumpSerializer_AttributeValue_U8List)
 // Test FlowDumpSerializer::serializeAttributeValue exception handling
 TEST_F(FlowDumpTest, FlowDumpSerializer_AttributeValue_ExceptionHandling)
 {
+    SWSS_LOG_ENTER();
     // Test with null metadata
     sai_attribute_t attr;
     memset(&attr, 0, sizeof(attr));

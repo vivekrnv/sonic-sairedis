@@ -31,6 +31,7 @@ NotificationQueue::~NotificationQueue()
 bool NotificationQueue::enqueue(
         _In_ const swss::KeyOpFieldsValuesTuple& item)
 {
+    SWSS_LOG_ENTER();
     return enqueue(item, nullptr);
 }
 
@@ -116,6 +117,7 @@ bool NotificationQueue::enqueue(
 bool NotificationQueue::tryDequeue(
         _Out_ swss::KeyOpFieldsValuesTuple& item)
 {
+    SWSS_LOG_ENTER();
     NotificationItem ntf_item;
     if (tryDequeue(ntf_item))
     {

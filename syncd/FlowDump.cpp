@@ -16,6 +16,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <cstring>
+#include <ctime>
 
 namespace syncd
 {
@@ -30,6 +31,12 @@ namespace syncd
         if (meta == nullptr)
         {
             return std::string();
+        }
+
+        // SAI_FLOW_ENTRY_ATTR_DASH_FLOW_ACTION is a bit mask not a single enum value.
+        if (attr.id == SAI_FLOW_ENTRY_ATTR_DASH_FLOW_ACTION)
+        {
+            return std::to_string(attr.value.s32);
         }
 
         try
@@ -56,6 +63,8 @@ namespace syncd
         SWSS_LOG_ENTER();
 
         nlohmann::json json_line;
+
+        json_line["epoch"] = std::time(nullptr);
 
         const sai_flow_entry_t& flow_entry = event_data.flow_entry;
         json_line["em"] = sai_serialize_mac(flow_entry.eni_mac);
@@ -85,10 +94,12 @@ namespace syncd
     FlowDumpWriter::FlowDumpWriter() :
         m_base_path(DEFAULT_BASE_PATH)
     {
+        SWSS_LOG_ENTER();
     }
 
     FlowDumpWriter& FlowDumpWriter::getInstance()
     {
+        SWSS_LOG_ENTER();
         static FlowDumpWriter instance;
         return instance;
     }
@@ -105,7 +116,7 @@ namespace syncd
 
         std::ostringstream oss;
         oss << m_base_path << FLOW_DUMP_FILE_PREFIX
-            << std::hex << std::setfill('0') << std::setw(16) 
+            << std::hex << std::setfill('0') << std::setw(16)
             << flow_bulk_session_vid << FLOW_DUMP_FILE_SUFFIX;
 
         return oss.str();
@@ -306,8 +317,8 @@ namespace syncd
 
         // Extract target filename for comparison
         size_t last_slash = target_file_path.find_last_of('/');
-        std::string target_filename = (last_slash != std::string::npos) ? 
-                                      target_file_path.substr(last_slash + 1) : 
+        std::string target_filename = (last_slash != std::string::npos) ?
+                                      target_file_path.substr(last_slash + 1) :
                                       target_file_path;
 
         DIR* dir = opendir(m_base_path.c_str());
