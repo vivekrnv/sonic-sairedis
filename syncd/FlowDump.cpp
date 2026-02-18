@@ -157,7 +157,11 @@ namespace syncd
         gz_file = gzopen(file_path.c_str(), "ab");
         if (gz_file == nullptr)
         {
-            SWSS_LOG_ERROR("Failed to open file %s for writing", file_path.c_str());
+            int err = errno;
+            SWSS_LOG_ERROR("Failed to open file %s for writing: errno=%d(%s)",
+                           file_path.c_str(),
+                           err,
+                           std::strerror(err));
             return false;
         }
 
