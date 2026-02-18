@@ -848,7 +848,7 @@ void NotificationProcessor::handle_flow_bulk_get_session_event(
     // Handle flow dump data first
     if (auxiliary_data != nullptr && !auxiliary_data->json_lines.empty())
     {
-        SWSS_LOG_INFO("Dumping %d flow, session id: %s", auxiliary_data->json_lines.size(), sai_serialize_object_id(flow_bulk_session_vid).c_str());
+        SWSS_LOG_INFO("Dumping %zu flow, session id: %s", auxiliary_data->json_lines.size(), sai_serialize_object_id(flow_bulk_session_vid).c_str());
         if (!FlowDumpWriter::getInstance().writeFlowDumpData(auxiliary_data, flow_bulk_session_vid))
         {
             SWSS_LOG_ERROR("Failed to write flow dump data to file");
