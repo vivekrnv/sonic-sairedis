@@ -2772,7 +2772,7 @@ std::string sai_serialize_flow_bulk_get_session_event_ntf(
 
     /*
      * NOTE: Only event_type is serialized here. The flow_entry, attr_count, and attr
-     * fields are NOT serialized as they are only populated only for Flow Dump
+     * fields are NOT serialized as they are only populated for Flow Dump
      * Due to performance reasons, they are not serialized and are not sent to orchagent.
      */
 
