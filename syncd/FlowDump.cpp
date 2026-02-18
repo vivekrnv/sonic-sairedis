@@ -15,6 +15,7 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <errno.h>
+#include <cstdint>
 #include <cstring>
 #include <ctime>
 
@@ -187,7 +188,15 @@ namespace syncd
             return true;
         }
 
-        unsigned int len = static_cast<unsigned int>(data.length());
+        size_t data_len = data.length();
+        if (data_len > UINT32_MAX)
+        {
+            SWSS_LOG_WARN("Data length %zu exceeds UINT32_MAX, writing first UINT32_MAX bytes only",
+                          data_len);
+            data_len = UINT32_MAX;
+        }
+
+        unsigned int len = static_cast<unsigned int>(data_len);
         int written = gzwrite(gz_file, data.c_str(), len);
 
         if (written != static_cast<int>(len))

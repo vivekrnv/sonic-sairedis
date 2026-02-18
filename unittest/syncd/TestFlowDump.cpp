@@ -412,10 +412,6 @@ TEST_F(FlowDumpTest, FlowDumpWriter_FilePathGeneration)
     // Clean up
     unlink(expected_file.c_str());
     rmdir(test_dir.c_str());
-
-    // Clean up
-    unlink(expected_file.c_str());
-    rmdir(test_dir.c_str());
 }
 
 TEST_F(FlowDumpTest, FlowDumpWriter_BasePathGetterSetter)
