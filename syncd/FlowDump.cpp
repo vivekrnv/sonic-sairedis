@@ -139,8 +139,6 @@ namespace syncd
         {
             dir_path = ".";
         }
-
-
         if (!dir_path.empty() && dir_path != ".")
         {
             struct stat st;
