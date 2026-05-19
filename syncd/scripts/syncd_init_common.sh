@@ -103,7 +103,7 @@ function check_warm_boot()
 
 function cleanup_stale_flow_dump_files()
 {
-    # Flows are to a file based on their VID. 
+    # Flows are to a file based on their VID.
     # Clean up all files in the directory to avoid updates to stale files.
     local flow_dump_dir=/var/dump/flows
     if [ -d "$flow_dump_dir" ]; then
